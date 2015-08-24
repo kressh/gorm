@@ -12,7 +12,13 @@ func getRealValue(value reflect.Value, columns []string) (results []interface{})
 	for _, column := range columns {
 		if reflect.Indirect(value).FieldByName(column).IsValid() {
 			result := reflect.Indirect(value).FieldByName(column).Interface()
-			if r, ok := result.(driver.Valuer); ok {
+			valueType := reflect.ValueOf(result)
+			if valueType.Kind() == reflect.Ptr {
+				if !valueType.IsValid() || valueType.IsNil() {
+					continue
+				}
+				result = reflect.Indirect(valueType).Interface()
+			} else if r, ok := result.(driver.Valuer); ok {
 				result, _ = r.Value()
 			}
 			results = append(results, result)
